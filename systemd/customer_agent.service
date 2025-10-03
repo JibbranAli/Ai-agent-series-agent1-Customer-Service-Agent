@@ -1,0 +1,16 @@
+[Unit]
+Description=Customer Service Agent (Gemini)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/customer_service_agent
+Environment=GEMINI_API_KEY=YOUR_REAL_API_KEY
+Environment=GEMINI_MODEL=gemini-2.5-flash
+ExecStart=/root/customer_service_agent/scripts/run_agent.sh
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
