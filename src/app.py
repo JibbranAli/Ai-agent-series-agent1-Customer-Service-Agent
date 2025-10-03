@@ -1,5 +1,6 @@
 import os
 import uvicorn
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -7,7 +8,6 @@ from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import Optional, List, Dict, Any
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from agent import handle_user_message
@@ -138,6 +138,20 @@ async def dashboard():
         logger.error(f"Failed to serve dashboard: {e}")
         raise HTTPException(status_code=500, detail="Dashboard unavailable")
 
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve the favicon file."""
+    try:
+        from fastapi.responses import Response
+        favicon_path = os.path.join(os.path.dirname(__file__), "frontend", "favicon.ico")
+        if os.path.exists(favicon_path):
+            return FileResponse(favicon_path)
+        else:
+            return Response(b"", media_type="image/x-icon")
+    except Exception as e:
+        logger.error(f"Failed to serve favicon: {e}")
+        return Response(b"", media_type="image/x-icon")
+
 @app.get("/health", response_model=HealthCheck)
 async def health_check():
     """Health check endpoint."""
@@ -175,7 +189,7 @@ async def message_endpoint(msg: MessageIn):
             "customer_name": msg.customer_name,
             "customer_email": str(msg.customer_email) if msg.customer_email else None,
             "session_id": msg.session_id,
-            "timestamp": str(uvicorn.logging.datetime.now())
+                "timestamp": str(datetime.now())
         }
         
         # Process the message
