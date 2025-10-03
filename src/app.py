@@ -269,7 +269,8 @@ async def update_ticket(ticket_id: int, update_data: dict):
 async def add_knowledge_base_entry(entry: dict):
     """Add a new knowledge base entry."""
     try:
-        success = add_kb_entry(
+        from tools.kb import add_kb_entry_with_category
+        success = add_kb_entry_with_category(
             title=entry.get("title", ""),
             content=entry.get("content", ""),
             category=entry.get("category", "General"),

@@ -329,29 +329,48 @@ class AgentDashboard {
     }
 
     async makeTicketRequest(ticketData) {
-        // Since we don't have a direct ticket endpoint, we'll use a message that triggers ticket creation
-        const response = await this.makeRequest('/message', {
-            method: 'POST',
-            body: JSON.stringify({
-                customer_name: ticketData.customer_name,
-                customer_email: ticketData.customer_email,
-                text: `Ticket Request: ${ticketData.subject}. Details: ${ticketData.body}`,
-                session_id: this.sessionId
-            })
-        });
+        try {
+            // Use direct ticket creation endpoint
+            const response = await this.makeRequest('/tickets', {
+                method: 'POST',
+                body: JSON.stringify({
+                    customer_name: ticketData.customer_name,
+                    customer_email: ticketData.customer_email,
+                    subject: ticketData.subject,
+                    body: ticketData.body
+                })
+            });
 
-        // Extract ticket ID from the response trace
-        if (response && response.trace) {
-            const ticketStep = response.trace.find(step => step.action === 'create_ticket');
-            if (ticketStep && ticketStep.result && ticketStep.result.ticket_id) {
-                return ticketStep.result.ticket_id;
+            if (response && response.ticket_id) {
+                return response.ticket_id;
             }
-        }
+            
+            throw new Error('Failed to create ticket');
+        } catch (error) {
+            console.error('Direct ticket creation failed, trying message fallback:', error);
+            
+            // Fallback to message-based ticket creation
+            const response = await this.makeRequest('/message', {
+                method: 'POST',
+                body: JSON.stringify({
+                    customer_name: ticketData.customer_name,
+                    customer_email: ticketData.customer_email,
+                    text: `Ticket Request: ${ticketData.subject}. Details: ${ticketData.body}`,
+                    session_id: this.sessionId
+                })
+            });
 
-        // If no ticket was created automatically, create one using the database directly
-        // This would require adding a direct ticket endpoint to the FastAPI app
-        this.showNotification('Ticket was processed as a message. Direct ticket creation not implemented yet.', 'info');
-        return null;
+            // Extract ticket ID from the response trace
+            if (response && response.trace) {
+                const ticketStep = response.trace.find(step => step.action === 'create_ticket');
+                if (ticketStep && ticketStep.result && ticketStep.result.ticket_id) {
+                    return ticketStep.result.ticket_id;
+                }
+            }
+
+            this.showNotification('Ticket was processed as a message. Please check tickets list.', 'info');
+            return null;
+        }
     }
 
     async searchKnowledgeBase(query = null, limit = 5) {
@@ -517,11 +536,30 @@ class AgentDashboard {
     async addKbArticle(event) {
         event.preventDefault();
         
-        // This would require adding a direct KB endpoint to the FastAPI app
-        this.showNotification('Add KB article feature not implemented yet. Use direct database access.', 'info');
-        
-        // Clear form
-        document.getElementById('kbForm').reset();
+        const formData = {
+            title: document.getElementById('kbTitle').value,
+            content: document.getElementById('kbContent').value,
+            category: document.getElementById('kbCategory').value || 'General',
+            tags: document.getElementById('kbTags').value || ''
+        };
+
+        try {
+            const response = await this.makeRequest('/kb', {
+                method: 'POST',
+                body: JSON.stringify(formData)
+            });
+
+            if (response && response.status === 'added') {
+                this.showNotification(`KB article "${formData.title}" added successfully!`, 'success');
+                document.getElementById('kbForm').reset();
+                this.searchKnowledgeBase('', 5); // Refresh search results
+            } else {
+                this.showNotification('Failed to add KB article', 'error');
+            }
+        } catch (error) {
+            console.error('KB article addition failed:', error);
+            this.showNotification('Failed to add KB article', 'error');
+        }
     }
 }
 

@@ -68,6 +68,45 @@ def add_kb_entry(title: str, content: str) -> bool:
         print(f"Unexpected error in add_kb_entry: {e}")
         return False
 
+def add_kb_entry_with_category(title: str, content: str, category: str = "General", tags: str = "") -> bool:
+    """
+    Add a new entry to the knowledge base with category and tags.
+    
+    Args:
+        title (str): The title/topic of the KB entry
+        content (str): The content/answer for the entry
+        category (str): Category for the entry
+        tags (str): Tags for the entry
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # Check if advanced schema exists
+        c.execute("PRAGMA table_info(kb)")
+        columns = [col[1] for col in c.fetchall()]
+        
+        if 'category' in columns and 'tags' in columns:
+            # New schema with category and tags
+            c.execute("INSERT INTO kb(title, content, category, tags) VALUES(?, ?, ?, ?)", 
+                     (title, content, category, tags))
+        else:
+            # Old schema - just title and content
+            c.execute("INSERT INTO kb(title, content) VALUES(?, ?)", (title, content))
+            
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.Error as e:
+        print(f"Database error in add_kb_entry_with_category: {e}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error in add_kb_entry_with_category: {e}")
+        return False
+
 def get_all_kb_entries() -> List[Dict[str, str]]:
     """
     Retrieve all knowledge base entries.
