@@ -439,7 +439,7 @@ class AgentDashboard {
     clearChat() {
         document.getElementById('chatMessages').innerHTML = `
             <div class="message agent">
-                , ,<div class="message-content">
+                <div class="message-content">
                     🤖 Hello! I'm your AI Customer Service Agent. How can I assist you today?
                     <div class="message-time">Agent ready</div>
                 </div>

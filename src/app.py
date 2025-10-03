@@ -56,10 +56,25 @@ try:
     frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
     if os.path.exists(frontend_path):
         app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+        app.mount("/dashboard.js", StaticFiles(directory=frontend_path), name="dashboard.js")
     else:
         logger.warning("Frontend directory not found. Dashboard will not be available.")
 except Exception as e:
     logger.error(f"Failed to mount static files: {e}")
+
+# Serve dashboard.js directly
+@app.get("/dashboard.js")
+async def dashboard_js():
+    """Serve the dashboard JavaScript file."""
+    try:
+        js_path = os.path.join(os.path.dirname(__file__), "frontend", "dashboard.js")
+        if os.path.exists(js_path):
+            return FileResponse(js_path, media_type="text/javascript")
+        else:
+            raise HTTPException(status_code=404, detail="Dashboard JavaScript not found")
+    except Exception as e:
+        logger.error(f"Failed to serve dashboard.js: {e}")
+        raise HTTPException(status_code=500, detail="Dashboard JavaScript unavailable")
 
 class MessageIn(BaseModel):
     """Input model for customer messages."""
