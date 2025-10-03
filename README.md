@@ -85,6 +85,186 @@ This script will:
 
 The API will be available at `http://localhost:8000`
 
+## 🎛️ **Web Dashboard Interface**
+
+### **🚀 Access Your Dashboard**
+Once the agent is running, visit: **`http://localhost:8000/dashboard`**
+
+The dashboard provides a beautiful, interactive web interface to interact with your Customer Service Agent without needing to use curl commands or API testing tools.
+
+### **📱 Dashboard Features**
+
+#### **1. 📊 Dashboard Overview**
+- **Quick Chat Interface**: Test the agent immediately on the home page
+- **Real-time Statistics**: See open tickets, KB articles, and agent health
+- **System Monitoring**: Live health checks and status updates
+
+#### **2. 💬 Live Chat Interface** 
+- **Simulate Customer Conversations**: Test how the agent responds to customers
+- **Multi-turn Conversations**: Maintain context across multiple messages
+- **Execution Trace Viewing**: See exactly what the agent did step-by-step
+- **Customer Details**: Set customer name and email for realistic testing
+
+#### **3. 🎫 Ticket Management**
+- **Create Tickets Manually**: Add support tickets directly through the interface
+- **View All Open Tickets**: See ticket details, status, and customer information
+- **Update Ticket Status**: Change ticket status (open → in_progress → closed)
+- **Ticket Priority Levels**: Set urgent, high, medium, or low priority
+
+#### **4. 📚 Knowledge Base Management**
+- **Search Interface**: Quickly find relevant FAQ articles
+- **Add New Articles**: Create new knowledge base entries with categories and tags
+- **Browse Existing Content**: View all 12 pre-loaded customer service articles
+- **Real-time Search**: Test search functionality instantly
+
+#### **5. 📈 Analytics & Monitoring**
+- **Agent Performance Testing**: Test execution speed and trace analysis
+- **Health Monitoring**: Check database connectivity and API status
+- **Execution Analysis**: View detailed traces of agent decision-making
+- **Performance Metrics**: Monitor response times and system health
+
+### **🎮 How to Use the Dashboard**
+
+#### **Step 1: Start the Agent**
+```bash
+# Option 1: Use the management script
+python run_agent.py start
+
+# Option 2: Quick setup and start
+python quickstart.py
+
+# Option 3: Direct start
+python src/app.py
+```
+
+#### **Step 2: Open Dashboard**
+- Navigate to `http://localhost:8000/dashboard`
+- The dashboard will automatically connect to your agent
+
+#### **Step 3: Test Customer Interactions**
+1. **Go to "Live Chat" tab**
+2. **Fill in customer details** (name and email)
+3. **Type a customer message** like "What is your return policy?"
+4. **See the agent response** and execution trace
+5. **Continue the conversation** to test multi-turn chats
+
+#### **Step 4: Manage Tickets**
+1. **Go to "Tickets" tab**
+2. **Create a new ticket** using the form
+3. **View open tickets** in the table below
+4. **Update ticket status** as needed
+
+#### **Step 5: Search Knowledge Base**
+1. **Go to "Knowledge Base" tab**
+2. **Search for terms** like "shipping", "return", "payment"
+3. **Add new articles** using the "Add New Article" section
+
+#### **Step 6: Monitor Performance**
+1. **Go to "Analytics" tab**
+2. **Test agent execution** with different messages
+3. **View detailed traces** of agent decision-making
+4. **Monitor system health** status
+
+### **🔄 Dashboard vs API Comparison**
+
+| Feature | Dashboard | API |
+|---------|-----------|-----|
+| **Ease of Use** | ✅ Click and type | ❌ Requires curl/scripts |
+| **Visual Interface** | ✅ Beautiful UI | ❌ Text responses only |
+| **Real-time Testing** | ✅ Instant feedback | ✅ Fast responses |
+| **Execution Traces** | ✅ Visual display | ✅ JSON data |
+| **Ticket Management** | ✅ Point and click | ✅ JSON requests |
+| **Knowledge Base** | ✅ Search interface | ✅ API endpoints |
+| **Debugging** | ✅ Visual tools | ❌ Manual JSON parsing |
+
+### **🎯 Dashboard Workflow Examples**
+
+#### **Example 1: Testing Return Policy Questions**
+1. Open dashboard → Live Chat
+2. Enter customer: "John Doe", "john@example.com"
+3. Type: "I want to return something I bought last week"
+4. **See agent response** and trace showing KB search
+5. **Follow-up**: "How long does the refund take?"
+6. **Agent maintains context** and provides detailed refund info
+
+#### **Example 2: Creating Support Tickets**
+1. Open dashboard → Tickets
+2. **Create ticket manually**:
+   - Customer: "Sarah Wilson"
+   - Email: "sarah@example.com"
+   - Subject: "Order not delivered"
+   - Priority: High
+3. **View ticket** in open tickets table
+4. **Update status** to "in_progress" when handling
+5. **Close ticket** when resolved
+
+#### **Example 3: Managing Knowledge Base**
+1. Open dashboard → Knowledge Base
+2. **Search for "shipping"** → See shipping articles
+3. **Add new article**:
+   - Title: "Express Delivery Options"
+   - Content: "We offer same-day delivery..."
+   - Category: "Shipping"
+   - Tags: "express same-day delivery"
+4. **Test search** for your new article
+
+#### **Example 4: Performance Analysis**
+1. Open dashboard → Analytics
+2. **Test different messages**:
+   - "What is your return policy?" (Simple query)
+   - "I have multiple issues with my order" (Complex request)
+   - "urgent help needed" (Ticket creation trigger)
+3. **Compare execution traces** and response times
+4. **Monitor system health** status
+
+### **🔧 Dashboard Technical Details**
+
+#### **Frontend Technology**
+- **HTML5/CSS3**: Modern responsive design
+- **Vanilla JavaScript**: No external frameworks needed
+- **FontAwesome**: Professional icons
+- **Inter Font**: Clean, readable typography
+
+#### **API Integration**
+- **REST API**: Communicates with FastAPI backend
+- **Real-time Updates**: Live status and data refresh
+- **Error Handling**: Graceful error messages and notifications
+- **Session Management**: Maintains conversation context
+
+#### **Responsive Design**
+- **Mobile Friendly**: Works on phones and tablets
+- **Desktop Optimized**: Full features on larger screens
+- **Cross-browser**: Compatible with all modern browsers
+- **Accessible**: Keyboard navigation and screen reader support
+
+### **🛠️ Dashboard Troubleshooting**
+
+#### **Dashboard Won't Load**
+```bash
+# Check if agent is running
+curl http://localhost:8000/health
+
+# Check frontend files
+ls src/frontend/
+# Should show: index.html, dashboard.js
+
+# Restart agent
+sudo kill $(ps aux | grep 'python.*app.py' | awk '{print $2}')
+python run_agent.py start
+```
+
+#### **Dashboard Can't Connect to Agent**
+1. **Verify agent URL**: Ensure it's `http://localhost:8000`
+2. **Check CORS settings**: Dashboard needs proper headers
+3. **Test API endpoints**: Try `http://localhost:8000/docs`
+
+#### **Dashboard Features Not Working**
+1. **Check browser console**: F12 → Console tab
+2. **Verify JavaScript**: Ensure `dashboard.js` loads
+3. **Test API endpoints**: Verify `/message`, `/tickets`, `/kb/search` work
+
+The API will be available at `http://localhost:8000`
+
 ## 🤖 How The Agent Works - Complete Flow
 
 ### 🎯 Agent Architecture
