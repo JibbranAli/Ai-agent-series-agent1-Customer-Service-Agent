@@ -2,12 +2,17 @@ import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import Optional, List, Dict, Any
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from agent import handle_user_message
+from tools.tickets import create_ticket, update_ticket_status
+from tools.kb import add_kb_entry
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +50,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for dashboard
+try:
+    frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
+    if os.path.exists(frontend_path):
+        app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    else:
+        logger.warning("Frontend directory not found. Dashboard will not be available.")
+except Exception as e:
+    logger.error(f"Failed to mount static files: {e}")
 
 class MessageIn(BaseModel):
     """Input model for customer messages."""
@@ -85,6 +100,28 @@ class HealthCheck(BaseModel):
 async def root():
     """Root endpoint with health check."""
     return HealthCheck()
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    """Serve the dashboard interface."""
+    try:
+        frontend_index = os.path.join(os.path.dirname(__file__), "frontend", "index.html")
+        if os.path.exists(frontend_index):
+            return FileResponse(frontend_index)
+        else:
+            return HTMLResponse("""
+                <html>
+                    <head><title>Dashboard Not Available</title></head>
+                    <body>
+                        <h1>Dashboard Not Available</h1>
+                        <p>The dashboard interface is not installed. Please ensure frontend files are in place.</p>
+                        <p><a href="/docs">Visit API Documentation</a></p>
+                    </body>
+                </html>
+            """)
+    except Exception as e:
+        logger.error(f"Failed to serve dashboard: {e}")
+        raise HTTPException(status_code=500, detail="Dashboard unavailable")
 
 @app.get("/health", response_model=HealthCheck)
 async def health_check():
@@ -162,6 +199,59 @@ async def list_tickets():
         return {"tickets": tickets}
     except Exception as e:
         logger.error(f"Ticket listing error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/tickets")
+async def create_ticket_endpoint(ticket: dict):
+    """Create a new support ticket."""
+    try:
+        ticket_id = create_ticket(
+            customer_name=ticket.get("customer_name", "Unknown"),
+            customer_email=ticket.get("customer_email", ""),
+            subject=ticket.get("subject", "No Subject"),
+            body=ticket.get("body", "")
+        )
+        if ticket_id:
+            return {"ticket_id": ticket_id, "status": "created"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to create ticket")
+    except Exception as e:
+        logger.error(f"Ticket creation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/tickets/{ticket_id}")
+async def update_ticket(ticket_id: int, update_data: dict):
+    """Update ticket status."""
+    try:
+        new_status = update_data.get("status")
+        if new_status:
+            success = update_ticket_status(ticket_id, new_status)
+            if success:
+                return {"ticket_id": ticket_id, "status": new_status, "updated": True}
+            else:
+                raise HTTPException(status_code=404, detail="Ticket not found")
+        else:
+            raise HTTPException(status_code=400, detail="Status is required")
+    except Exception as e:
+        logger.error(f"Ticket update error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/kb")
+async def add_knowledge_base_entry(entry: dict):
+    """Add a new knowledge base entry."""
+    try:
+        success = add_kb_entry(
+            title=entry.get("title", ""),
+            content=entry.get("content", ""),
+            category=entry.get("category", "General"),
+            tags=entry.get("tags", "")
+        )
+        if success:
+            return {"status": "added", "title": entry.get("title")}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to add KB entry")
+    except Exception as e:
+        logger.error(f"KB entry addition error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
